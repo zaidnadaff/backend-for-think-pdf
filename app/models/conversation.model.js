@@ -2,7 +2,7 @@ import sequelize from "../config/db.config";
 import { DataTypes } from "sequelize";
 import { Document } from "./document.model";
 
-const Conversation = sequalize.define("conversation", {
+const Conversation = sequelize.define("conversation", {
   id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
   conversation: { type: DataTypes.JSONB, allowNull: false },
 });

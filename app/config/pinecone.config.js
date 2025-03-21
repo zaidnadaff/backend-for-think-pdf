@@ -8,22 +8,22 @@ const initializePinecone = async () => {
     apiKey: apiKey,
   });
 
-  const indexName = "pdf_index";
+  const indexName = "pdf-index";
 
-  await pc.createIndex({
-    name: indexName,
+  // await pc.createIndex({
+  //   name: indexName,
 
-    dimension: 768,
-    metric: "cosine",
+  //   dimension: 768,
+  //   metric: "cosine",
 
-    spec: {
-      serverless: {
-        cloud: "aws",
+  //   spec: {
+  //     serverless: {
+  //       cloud: "aws",
 
-        region: "us-east-1",
-      },
-    },
-  });
+  //       region: "us-east-1",
+  //     },
+  //   },
+  // });
   return pc;
 };
 

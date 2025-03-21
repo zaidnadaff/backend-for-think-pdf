@@ -1,9 +1,11 @@
 import express from "express";
 import fs from "fs";
-import { processPDF } from "../services/pdfService.js";
+import { processPDF } from "../services/pdf.service.js";
 // import authMiddleware from "../middleware/auth.js";
 import { getAllDocuments } from "../services/document.service.js";
 import { User } from "../models/user.model.js";
+import { v4 as uuidv4 } from "uuid";
+
 import multer from "multer";
 const upload = multer({ dest: "uploads/" });
 if (!fs.existsSync("uploads")) {
@@ -35,14 +37,14 @@ documentRouter.post("/upload", upload.single("file"), async (req, res) => {
     if (!req.file) {
       throw new Error("Missing File");
     }
-    const user = User.findOne({
-      where: {
-        id: req.body.userId,
-      },
-    });
-    if (!user) {
-      throw new Error("User not found");
-    }
+    // const user = User.findOne({
+    //   where: {
+    //     id: req.body.userId,
+    //   },
+    // });
+    // if (!user) {
+    //   throw new Error("User not found");
+    // }
     const file = req.file;
     const { documentId, message } = await processPDF(
       file.path,
@@ -56,6 +58,11 @@ documentRouter.post("/upload", upload.single("file"), async (req, res) => {
   } catch (err) {
     return res.status(404).json({ message: err.message });
   }
+});
+
+documentRouter.get("/sample", (req, res) => {
+  const id = uuidv4();
+  res.json({ id: id });
 });
 
 export default documentRouter;
