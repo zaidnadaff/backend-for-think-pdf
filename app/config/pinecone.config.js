@@ -1,30 +1,16 @@
-import { Pinecone } from "@pinecone-database/pinecone";
 import "dotenv/config";
 
-const apiKey = process.env.PINECONE_API_KEY;
+import { Pinecone as PineconeClient } from "@pinecone-database/pinecone";
 
 const initializePinecone = async () => {
-  const pc = new Pinecone({
-    apiKey: apiKey,
-  });
-
-  const indexName = "pdf-index";
-
-  // await pc.createIndex({
-  //   name: indexName,
-
-  //   dimension: 768,
-  //   metric: "cosine",
-
-  //   spec: {
-  //     serverless: {
-  //       cloud: "aws",
-
-  //       region: "us-east-1",
-  //     },
-  //   },
-  // });
-  return pc;
+  const pinecone = new PineconeClient();
+  return pinecone;
 };
 
-export { initializePinecone };
+const getPineconeIndex = async (pinecone) => {
+  const indexName = process.env.PINECONE_INDEX;
+  const index = pinecone.index(indexName);
+  return index;
+};
+
+export { initializePinecone, getPineconeIndex };

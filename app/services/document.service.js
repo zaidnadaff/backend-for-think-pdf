@@ -1,14 +1,21 @@
 import { Document } from "../models/document.model.js";
+import { Conversation } from "../models/conversation.model.js";
 
 const saveDocument = async (userId, documentId, title) => {
   try {
-    await Document.create({
+    const document = await Document.create({
       id: documentId,
       title: title,
       userId: userId,
     });
+
+    await Conversation.create({
+      conversation: [], // Empty JSON array for conversation
+      documentId: document.id, // Link to the document just created
+    });
     return { success: true, message: "Document saved successfully" };
   } catch (err) {
+    console.log(err);
     return { success: false, message: err.message };
   }
 };

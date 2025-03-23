@@ -1,11 +1,14 @@
 import sequelize from "../config/db.config.js";
 import { DataTypes } from "sequelize";
-import { User } from "./user.model.js";
 
 const Document = sequelize.define(
-  "document",
+  "Document",
   {
-    id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
     title: { type: DataTypes.STRING, allowNull: false },
   },
   {
@@ -13,7 +16,15 @@ const Document = sequelize.define(
   }
 );
 
-User.hasMany(Document);
-Document.belongsTo(User);
+Document.associate = (models) => {
+  Document.belongsTo(models.User, {
+    foreignKey: "userId",
+    onDelete: "CASCADE",
+  });
+  Document.hasOne(models.Conversation, {
+    foreignKey: "documentId",
+    as: "conversation",
+  });
+};
 
 export { Document };

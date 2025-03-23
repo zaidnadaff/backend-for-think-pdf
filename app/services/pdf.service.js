@@ -2,7 +2,10 @@ import { PDFLoader } from "@langchain/community/document_loaders/fs/pdf";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { PineconeStore } from "@langchain/pinecone";
 import { initializeEmbeddingsModel } from "../config/gemini.config.js";
-import { initializePinecone } from "../config/pinecone.config.js";
+import {
+  getPineconeIndex,
+  initializePinecone,
+} from "../config/pinecone.config.js";
 import { saveDocument } from "./document.service.js";
 import { v4 as uuidv4 } from "uuid";
 import fs from "fs";
@@ -12,23 +15,29 @@ const processPDF = async (filePath, fileName, userId) => {
     if (!filePath || !fileName || !userId) {
       throw new Error("Invalid processing parameters");
     }
-    const docuemntId = uuidv4();
 
-    const rawText = await getPDFText(filePath);
-    const textChunks = await generateChunks(rawText);
-    await storeDocumentinPinecone(textChunks, docuemntId, userId);
+    const documentId = uuidv4();
+    // const rawText = await getPDFText(filePath);
+    // const textChunks = await generateChunks(rawText);
+    // await storeDocumentInPinecone(textChunks, documentId, userId);
 
-    // const { isDocumentSaved, documentMessage } = await saveDocument(
-    //   userId,
-    //   docuemntId,
-    //   fileName
-    // );
-    // if (!isDocumentSaved) {
-    //   throw new Error(documentMessage);
-    // }
+    const docResponse = await saveDocument(userId, documentId, fileName);
 
-    return { documentId: docuemntId, message: "Document Loaded Successfully!" };
+    if (!docResponse.success) {
+      console.log(isDocumentSaved, documentMessage);
+      console.log("throwing an error");
+      throw new Error(docResponse.message);
+    }
+
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+
+    return { documentId, message: "Document Loaded Successfully!" };
   } catch (err) {
+    if (filePath && fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
     return { documentId: null, message: err.message };
   }
 };
@@ -53,27 +62,37 @@ const generateChunks = async (text) => {
   return chunks;
 };
 
-const storeDocumentinPinecone = async (textChunks, documentId, userId) => {
-  const pc = await initializePinecone();
-  const embeddingsModel = initializeEmbeddingsModel();
-  const pineconeIndex = pc.index("pdf-index");
-  const documents = textChunks.map((chunk, index) => ({
-    PageContent: chunk,
-    Metadata: {
-      documentId: documentId,
-      userId: userId,
-      chunkIndex: index,
-    },
-  }));
-  const vectorStore = await PineconeStore.fromExistingIndex(
-    documents,
-    embeddingsModel,
-    {
-      index: pineconeIndex,
-      namespace: "ab-5c",
-    }
-  );
-  console.log(vectorStore);
+const storeDocumentInPinecone = async (textChunks, documentId, userId) => {
+  try {
+    const pinecone = await initializePinecone();
+    const embeddingsModel = initializeEmbeddingsModel();
+    const pineconeIndex = await getPineconeIndex(pinecone);
+
+    const documents = textChunks.map((chunk, i) => ({
+      pageContent: chunk,
+      metadata: {
+        documentId,
+        userId,
+        chunkIndex: i,
+      },
+    }));
+
+    await PineconeStore.fromDocuments(documents, embeddingsModel, {
+      pineconeIndex,
+      namespace: documentId,
+      textKey: "pageContent",
+    });
+
+    console.log(
+      `Stored ${documents.length} embeddings in Pinecone for document ${documentId}`
+    );
+    return true;
+  } catch (error) {
+    console.error("Error storing document in Pinecone:", error);
+    throw new Error(
+      `Failed to store document in vector database: ${error.message}`
+    );
+  }
 };
 
 export { processPDF };

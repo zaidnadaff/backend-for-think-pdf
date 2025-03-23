@@ -3,7 +3,6 @@ import fs from "fs";
 import { processPDF } from "../services/pdf.service.js";
 // import authMiddleware from "../middleware/auth.js";
 import { getAllDocuments } from "../services/document.service.js";
-import { User } from "../models/user.model.js";
 import { v4 as uuidv4 } from "uuid";
 
 import multer from "multer";
