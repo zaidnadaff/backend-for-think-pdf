@@ -10,8 +10,8 @@ const saveDocument = async (userId, documentId, title) => {
     });
 
     await Conversation.create({
-      conversation: [], // Empty JSON array for conversation
-      documentId: document.id, // Link to the document just created
+      conversation: [],
+      DocumentId: documentId,
     });
     return { success: true, message: "Document saved successfully" };
   } catch (err) {

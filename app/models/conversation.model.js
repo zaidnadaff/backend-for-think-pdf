@@ -11,11 +11,8 @@ const Conversation = sequelize.define("Conversation", {
   conversation: { type: DataTypes.JSONB, allowNull: false },
 });
 
-Conversation.associate = (models) => {
-  Conversation.belongsTo(models.Document, {
-    foreignKey: "documentId",
-    onDelete: "CASCADE",
-  });
-};
+Document.hasOne(Conversation);
+
+Conversation.belongsTo(Document);
 
 export { Conversation };

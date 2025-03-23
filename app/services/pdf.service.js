@@ -24,7 +24,6 @@ const processPDF = async (filePath, fileName, userId) => {
     const docResponse = await saveDocument(userId, documentId, fileName);
 
     if (!docResponse.success) {
-      console.log(isDocumentSaved, documentMessage);
       console.log("throwing an error");
       throw new Error(docResponse.message);
     }
