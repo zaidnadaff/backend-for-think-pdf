@@ -17,9 +17,9 @@ const processPDF = async (filePath, fileName, userId) => {
     }
 
     const documentId = uuidv4();
-    // const rawText = await getPDFText(filePath);
-    // const textChunks = await generateChunks(rawText);
-    // await storeDocumentInPinecone(textChunks, documentId, userId);
+    const rawText = await getPDFText(filePath);
+    const textChunks = await generateChunks(rawText);
+    await storeDocumentInPinecone(textChunks, documentId, userId);
 
     const docResponse = await saveDocument(userId, documentId, fileName);
 

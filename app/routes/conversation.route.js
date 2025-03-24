@@ -1,25 +1,39 @@
+import {
+  generateResponse,
+  getConversationHistory,
+  initializeConversation,
+} from "../services/conversation.service.js";
 import express from "express";
 
 const conversationRouter = express.Router();
 
-conversationRouter.post("/retrieve", async (req, res) => {
+conversationRouter.post("/ask", async (req, res) => {
   try {
-    const { userId, documentId } = req.body;
-    if (!userId) {
-      throw new Error("Missing User Id");
+    const { documentId, question } = req.body;
+    if (!documentId || !question) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Missing required fields." });
     }
-    if (!documentId) {
-      throw new Error("Missing Document Id");
-    }
-    const { success, document, message } = await getDocument(
-      userId,
-      documentId
-    );
-    if (!success) {
-      throw new Error(message);
-    }
-    res.status(200).json({ message: message, Document: document });
-  } catch (err) {
-    return res.status(400).json({ message: err.message });
+    await initializeConversation(documentId);
+
+    const response = await generateResponse(question, documentId);
+    res.json({ success: true, response });
+  } catch (error) {
+    console.error("Error in /ask route:", error);
+    res.status(500).json({ success: false, message: error.message });
   }
 });
+
+conversationRouter.post("/get-conversation", async (req, res) => {
+  try {
+    const { documentId } = req.body;
+    const conversation = await getConversationHistory(documentId);
+    res.json(conversation);
+  } catch (error) {
+    console.error("Error in /get-conversation route:", error);
+    res.status(500).json({ success: false, message: error.message });
+  }
+});
+
+export default conversationRouter;

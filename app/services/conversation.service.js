@@ -7,10 +7,8 @@ import { initializeEmbeddingsModel } from "../config/gemini.config.js";
 import { PineconeStore } from "@langchain/pinecone";
 import { initializeGeminiModel } from "../config/gemini.config.js";
 
-// Initialize empty conversation for a document
 const initializeConversation = async (documentId) => {
   try {
-    // Check if conversation already exists
     const existingConversation = await Conversation.findOne({
       where: { DocumentId: documentId },
     });
@@ -22,11 +20,9 @@ const initializeConversation = async (documentId) => {
         conversation: existingConversation,
       };
     }
-
-    // Create new empty conversation
     const newConversation = await Conversation.create({
       DocumentId: documentId,
-      conversation: [], // Empty array to store conversation history
+      conversation: [],
     });
 
     return {
@@ -40,7 +36,6 @@ const initializeConversation = async (documentId) => {
   }
 };
 
-// Get conversation history
 const getConversationHistory = async (documentId) => {
   try {
     const conversation = await Conversation.findOne({
@@ -58,7 +53,6 @@ const getConversationHistory = async (documentId) => {
   }
 };
 
-// Store a new exchange in the conversation history
 const storeConversationExchange = async (documentId, question, answer) => {
   try {
     const { conversation } = await getConversationHistory(documentId);
@@ -69,7 +63,6 @@ const storeConversationExchange = async (documentId, question, answer) => {
       { question, answer, timestamp: new Date() },
     ];
 
-    // Update the conversation in the database
     await Conversation.update(
       { conversation: updatedConversation },
       { where: { DocumentId: documentId } }
@@ -103,18 +96,16 @@ const generateResponse = async (question, documentId) => {
     if (!model) {
       throw new Error("Model not initialized");
     }
-
-    // Get document context
     const relevantDocs = await getDocumentContext(documentId, question);
+    console.log("Relevant docs:", relevantDocs);
+
     const contextText = relevantDocs.map((doc) => doc.pageContent).join("\n\n");
 
-    // Get conversation history
     const { conversation } = await getConversationHistory(documentId);
     const historyText = conversation
       .map((h) => `User: ${h.question}\nAssistant: ${h.answer}`)
       .join("\n\n");
 
-    // Create prompt
     const prompt = `I'll answer your question based on the following information:
     Context from documents:
     ${contextText}
@@ -122,7 +113,6 @@ const generateResponse = async (question, documentId) => {
     User's question: ${question}
     Please provide a detailed and accurate answer based only on the information provided in the context.`;
 
-    // Generate streaming response
     const result = await model.generateContentStream(prompt);
     let fullResponse = "";
 
@@ -130,15 +120,6 @@ const generateResponse = async (question, documentId) => {
     for await (const chunk of result.stream) {
       const chunkText = chunk.text();
       fullResponse += chunkText;
-      // Send chunk to client if needed
-      // if (res) {
-      //   res.write(
-      //     `data: ${JSON.stringify({
-      //       type: "chunk",
-      //       text: chunkText,
-      //     })}\n\n`
-      //   );
-      // }
     }
 
     // Store in conversation history
@@ -150,6 +131,12 @@ const generateResponse = async (question, documentId) => {
     throw error;
   }
 };
+
+// const answer = await generateResponse(
+//   "what is this about?",
+//   "e762742f-1e1a-4e9e-86c1-85b93431e4f8"
+// );
+// console.log(answer);
 
 export {
   initializeConversation,
