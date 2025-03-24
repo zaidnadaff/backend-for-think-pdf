@@ -3,7 +3,7 @@ import { Conversation } from "../models/conversation.model.js";
 
 const saveDocument = async (userId, documentId, title) => {
   try {
-    const document = await Document.create({
+    await Document.create({
       id: documentId,
       title: title,
       userId: userId,
